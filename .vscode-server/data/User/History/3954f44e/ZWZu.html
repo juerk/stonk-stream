@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stonk.Stream</title>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Solana Web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+
+  <style>
+    /* Fullscreen layout */
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #0b3d0b, #164c16);
+      color: #d4f1be;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+    /* Ticker at top */
+    .ticker {
+      height: 2rem;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .ticker__content {
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: scrollTicker 20s linear infinite;
+      color: #e0ffb3;
+      font-weight: bold;
+    }
+    @keyframes scrollTicker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+    /* Main flex area */
+    #mainContent {
+      flex: 1;
+      display: flex;
+    }
+    /* Video area 75% */
+    #playerWrapper {
+      position: relative;
+      width: 75%;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* View count */
+    #viewCount {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 0.5rem;
+      background: rgba(255,255,255,0.8);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      color: #388e3c;
+    }
+    #viewNum { margin-left: 0.25rem; font-weight: bold; }
+    /* Volume controls */
+    #volumeControls {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    /* Chat area 25% */
+    #chatContainer {
+      width: 25%;
+      display: flex;
+      flex-direction: column;
+      background: #264d26;
+      border-left: 2px solid #1b3a1b;
+    }
+    /* Wallet connect */
+    #connectContainer {
+      padding: 0.5rem;
+      background: #1b3a1b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #connectWalletBtn {
+      padding: 0.4rem 0.8rem;
+      background: #66bb6a;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #111;
+    }
+    #walletAddress {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #c5e1a5;
+    }
+    /* Chat log and input */
+    #chatLog {
+      flex: 1;
+      padding: 0.5rem;
+      background: #1b3a1b;
+      overflow-y: auto;
+    }
+    .chat-name { font-weight: bold; color: #a5d6a7; }
+    #messageControls {
+      display: flex;
+      padding: 0.5rem;
+      border-top: 1px solid #444;
+      background: #2e7d32;
+    }
+    #messageControls input {
+      flex: 1;
+      padding: 0.4rem;
+      border: none;
+      background: #1b3a1b;
+      color: #d4f1be;
+    }
+    #messageControls button {
+      padding: 0.4rem 0.8rem;
+      background: #43a047;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticker">
+    <div class="ticker__content">🔴 LIVE NOW • Wuerk • Watch me in my natural habitat, do not feed the animal • 💵</div>
+  </div>
+  <div id="mainContent">
+    <div id="playerWrapper">
+      <video id="video" controls autoplay muted></video>
+      <div id="viewCount"><span>👤</span><span id="viewNum">0</span></div>
+      <div id="volumeControls"><input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1"><button id="muteBtn">🔊</button></div>
+    </div>
+    <div id="chatContainer">
+      <div id="connectContainer">
+        <button id="connectWalletBtn">🔗 Connect Wallet</button>
+        <span id="walletAddress"></span>
+      </div>
+      <div id="chatLog"></div>
+      <div id="messageControls">
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendMsgBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Clear all storage and reload
+    document.getElementById('clearBtn').onclick = () => { localStorage.clear(); sessionStorage.clear(); location.reload(); };
+
+    // HLS.js playback
+    const video = document.getElementById('video');
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true }); hls.attachMedia(video);
+      hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource('https://stonk.stream/hls/mystream.m3u8'));
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = 'https://stonk.stream/hls/mystream.m3u8';
+    }
+
+    // Volume and mute
+    const volSlider = document.getElementById('volumeSlider'), muteBtn = document.getElementById('muteBtn');
+    volSlider.oninput = () => video.volume = volSlider.value;
+    muteBtn.onclick = () => { video.muted = !video.muted; muteBtn.textContent = video.muted ? '🔇' : '🔊'; };
+
+    // Connect wallet & username
+    const connectBtn = document.getElementById('connectWalletBtn'), addrSpan = document.getElementById('walletAddress');
+    let provider, username;
+    window.addEventListener('load', () => {
+      if (window.solana && window.solana.isPhantom) {
+        provider = window.solana;
+        connectBtn.onclick = async () => {
+          try {
+            const { publicKey } = await provider.connect();
+            const key = publicKey.toString(); addrSpan.textContent = key;
+            username = localStorage.getItem('user_' + key) || prompt('Enter display name:') || key.slice(0,6) + '…';
+            localStorage.setItem('user_' + key, username);
+            connectBtn.textContent = username;
+          } catch {
+            alert('Wallet connect failed');
+          }
+        };
+      } else {
+        connectBtn.textContent = 'Install Phantom';
+        connectBtn.onclick = () => window.open('https://phantom.app/', '_blank');
+      }
+    });
+
+    // Viewer count
+    const sessionId = sessionStorage.getItem('sessionId') || crypto.randomUUID();
+    sessionStorage.setItem('sessionId', sessionId);
+    let left = false;
+    window.addEventListener('load', () => navigator.sendBeacon(`/api/viewers?join=1&session=${sessionId}`));
+    const doLeave = () => { if (!left) { left = true; navigator.sendBeacon(`/api/viewers?join=0&session=${sessionId}`); } };
+    window.addEventListener('pagehide', doLeave);
+    window.addEventListener('beforeunload', doLeave);
+    async function updateViewers() {
+      try {
+        const res = await fetch('/api/viewers/count');
+        const { viewers } = await res.json();
+        document.getElementById('viewNum').textContent = viewers;
+      } catch {}
+    }
+    setInterval(updateViewers, 5000);
+    updateViewers();
+
+    // Chat
+    const chatLog = document.getElementById('chatLog'), msgIn = document.getElementById('messageInput');
+    document.getElementById('sendMsgBtn').onclick = () => {
+      if (!username) return alert('Connect wallet first');
+      const msg = msgIn.value.trim(); if (!msg) return;
+      const div = document.createElement('div'), span = document.createElement('span');
+      span.textContent = username + ': ';
+      span.classList.add('chat-name');
+      div.appendChild(span); div.appendChild(document.createTextNode(msg));
+      chatLog.appendChild(div); chatLog.scrollTop = chatLog.scrollHeight;
+      msgIn.value = ''; msgIn.focus();
+    };
+    msgIn.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('sendMsgBtn').click(); });
+  </script>
+</body>
+</html>

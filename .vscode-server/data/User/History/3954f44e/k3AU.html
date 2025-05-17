@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stonk.Stream</title>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Solana Web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+
+  <style>
+    /* Green money theme & theatre-like layout */
+    body {
+      background: linear-gradient(135deg, #0b3d0b, #164c16);
+      color: #d4f1be;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #clearBtn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.4rem 0.8rem;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      z-index: 10;
+    }
+    h1 {
+      position: absolute;
+      top: 1rem;
+      left: 5%;
+      margin: 0;
+      color: #a8e063;
+      text-shadow: 0 0 5px #a8e063;
+      font-size: 1.5rem;
+    }
+    #mainContent {
+      display: flex;
+      height: calc(100vh - 4rem);
+      margin-top: 3rem;
+      margin-left: 5%;
+      margin-right: 5%;
+    }
+    /* Video section 75% width */
+    #playerWrapper {
+      position: relative;
+      width: 75%;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .ticker {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0,0,0,0.5);
+      height: 2rem;
+      display: flex;
+      align-items: center;
+    }
+    .ticker__content {
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: scrollTicker 20s linear infinite;
+      color: #e0ffb3;
+      font-weight: bold;
+    }
+    @keyframes scrollTicker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+    #viewCount {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 0.5rem;
+      background: rgba(255,255,255,0.8);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      color: #388e3c;
+    }
+    #viewNum { color: #388e3c; font-weight: bold; margin-left: 0.25rem; }
+    #volumeControls {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    #volumeSlider { cursor: pointer; }
+    #muteBtn { background: none; border: none; color: #d4f1be; cursor: pointer; }
+
+    /* Chat section 20% width */
+    #chatContainer {
+      width: 20%;
+      margin-left: auto;
+      background: #264d26;
+      display: flex;
+      flex-direction: column;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #connectContainer {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      gap: 0.5rem;
+      background: #1b3a1b;
+    }
+    #connectWalletBtn {
+      padding: 0.4rem 0.8rem;
+      background: #66bb6a;
+      border: none;
+      border-radius: 4px;
+      color: #111;
+      cursor: pointer;
+    }
+    #walletAddress { font-family: monospace; font-size: 0.8rem; color: #c5e1a5; }
+    #chatLog {
+      flex: 1;
+      padding: 0.5rem;
+      background: #1b3a1b;
+      overflow-y: auto;
+    }
+    .chat-name { color: #a5d6a7; font-weight: bold; }
+    #messageControls {
+      display: flex;
+      border-top: 1px solid #444;
+      padding: 0.5rem;
+      gap: 0.5rem;
+      background: #2e7d32;
+    }
+    #messageControls input { flex: 1; padding: 0.4rem; background: #1b3a1b; color: #d4f1be; border: none; }
+    #messageControls button { padding: 0.4rem 0.8rem; background: #43a047; border: none; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <button id="clearBtn">💰 Clear</button>
+  <h1>🎥 Stonk.Stream 💸</h1>
+
+  <div id="mainContent">
+    <div id="playerWrapper">
+      <video id="video" controls autoplay muted></video>
+      <div class="ticker"><div class="ticker__content">🔴 LIVE NOW • Wuerk • Watch me in my natural habitat, do not feed the animal • 💵</div></div>
+      <div id="viewCount"><span>👤</span><span id="viewNum">0</span></div>
+      <div id="volumeControls"><input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1"><button id="muteBtn">🔊</button></div>
+    </div>
+
+    <div id="chatContainer">
+      <div id="connectContainer"><button id="connectWalletBtn">🔗 Connect Wallet</button><span id="walletAddress"></span></div>
+      <div id="chatLog"></div>
+      <div id="messageControls"><input type="text" id="messageInput" placeholder="Type a message..."><button id="sendMsgBtn">Send</button></div>
+    </div>
+  </div>
+
+  <script>
+    // ... existing JS (HLS, wallet, viewers, chat) remains unchanged ...
+  </script>
+</body>
+</html>

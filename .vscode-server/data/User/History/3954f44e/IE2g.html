@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stonk.Stream</title>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Solana Web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+
+  <style>
+    /* Layout */
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #0b3d0b;
+      color: #d4f1be;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+    .ticker {
+      height: 2rem;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .ticker__content {
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: scrollTicker 20s linear infinite;
+      color: #e0ffb3;
+      font-weight: bold;
+    }
+    @keyframes scrollTicker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+    #mainContent { flex: 1; display: flex; }
+    #playerWrapper {
+      position: relative;
+      width: 75%;
+      background: #000;
+    }
+    /* Stretch to fill both width and height */
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      background: #000;
+    }
+    #viewCount {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 0.5rem;
+      background: rgba(255,255,255,0.8);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      color: #388e3c;
+    }
+    #viewNum { margin-left: 0.25rem; font-weight: bold; }
+    #volumeControls {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+    }
+
+    /* Chat */
+    #chatContainer {
+      width: 25%;
+      display: flex;
+      flex-direction: column;
+      background: #264d26;
+      border-left: 2px solid #1b3a1b;
+    }
+    #connectContainer {
+      padding: 0.5rem;
+      background: #1b3a1b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    #connectWalletBtn {
+      padding: 0.4rem 0.8rem;
+      background: #66bb6a;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #111;
+    }
+    #walletAddress {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #c5e1a5;
+    }
+    #chatLog {
+      flex: 1;
+      padding: 0.5rem;
+      background: #1b3a1b;
+      overflow-y: auto;
+    }
+    .chat-name { font-weight: bold; color: #ff5555; margin-right: 0.25rem; }
+    #messageControls {
+      display: flex;
+      padding: 0.5rem;
+      border-top: 1px solid #444;
+      background: #2e7d32;
+    }
+    #messageControls input {
+      flex: 1;
+      padding: 0.4rem;
+      border: none;
+      background: #1b3a1b;
+      color: #d4f1be;
+    }
+    #messageControls button {
+      padding: 0.4rem 0.8rem;
+      background: #43a047;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticker">
+    <div class="ticker__content">WELCOME TO 🎥📈STONK.STREAM📉🎥 🔴 LIVE NOW • Wuerk 🔴 Watch me in my natural habitat, do not feed the animal🦧</div>
+  </div>
+  <div id="mainContent">
+    <div id="playerWrapper">
+      <video id="video" controls autoplay muted></video>
+      <div id="viewCount"><span>👤</span><span id="viewNum">0</span></div>
+     
+    </div>
+    <div id="chatContainer">
+      <div id="connectContainer">
+        <button id="connectWalletBtn">🔗 Connect Wallet</button>
+        <span id="walletAddress"></span>
+      </div>
+      <div id="chatLog"></div>
+      <div id="messageControls">
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendMsgBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // HLS.js playback
+      const video = document.getElementById('video');
+      if (Hls.isSupported()) {
+        const hls = new Hls(); hls.loadSource('https://stonk.stream/hls/mystream.m3u8'); hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) video.src='https://stonk.stream/hls/mystream.m3u8';
+
+      // Mute toggle
+      const muteBtn = document.getElementById('muteBtn');
+      muteBtn.onclick = () => { video.muted = !video.muted; muteBtn.textContent = video.muted ? '🔇' : '🔊'; };
+
+      // Wallet persistence
+      const connectBtn = document.getElementById('connectWalletBtn'), addrSpan = document.getElementById('walletAddress');
+      let username = null;
+      const storedKey = localStorage.getItem('walletKey');
+      if (storedKey) {
+        addrSpan.textContent = storedKey;
+        username = localStorage.getItem('user_' + storedKey);
+        if (username) connectBtn.textContent = username;
+      }
+      if (window.solana && window.solana.isPhantom) {
+        connectBtn.onclick = async () => {
+          try {
+            const res = await window.solana.connect();
+            const key = res.publicKey.toString();
+            localStorage.setItem('walletKey', key);
+            addrSpan.textContent = key;
+            username = localStorage.getItem('user_' + key) || prompt('Choose a username:') || 'Guest';
+            localStorage.setItem('user_' + key, username);
+            connectBtn.textContent = username;
+          } catch { alert('Wallet connect failed'); }
+        };
+      } else { connectBtn.textContent = 'Install Phantom'; connectBtn.onclick = () => window.open('https://phantom.app/', '_blank'); }
+
+      // Viewer count
+      const sid = sessionStorage.getItem('sid') || crypto.randomUUID(); sessionStorage.setItem('sid', sid);
+      navigator.sendBeacon(`/api/viewers?join=1&session=${sid}`);
+      window.addEventListener('beforeunload', () => navigator.sendBeacon(`/api/viewers?join=0&session=${sid}`));
+      async function updView() { try { const r = await fetch('/api/viewers/count'); const d = await r.json(); document.getElementById('viewNum').textContent = d.viewers; } catch {} }
+      updView(); setInterval(updView, 5000);
+
+      // Chat persistence
+      const chatLog = document.getElementById('chatLog'), msgIn = document.getElementById('messageInput');
+      const stored = JSON.parse(localStorage.getItem('chat_messages') || '[]');
+      stored.forEach(({user, msg}) => {
+        const d = document.createElement('div'), s = document.createElement('span');
+        s.textContent = user + ': '; s.classList.add('chat-name');
+        d.appendChild(s);
+        d.appendChild(document.createTextNode(msg));
+        chatLog.appendChild(d);
+      });
+
+      document.getElementById('sendMsgBtn').onclick = () => {
+        if (!username) return alert('Connect wallet and choose username first');
+        const m = msgIn.value.trim(); if (!m) return;
+        const d = document.createElement('div'), s = document.createElement('span');
+        s.textContent = username + ': '; s.classList.add('chat-name');
+        d.appendChild(s);
+        d.appendChild(document.createTextNode(m));
+        chatLog.appendChild(d);
+        chatLog.scrollTop = chatLog.scrollHeight;
+        stored.push({user: username, msg: m});
+        localStorage.setItem('chat_messages', JSON.stringify(stored));
+        msgIn.value = '';
+      };
+      msgIn.addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('sendMsgBtn').click(); });
+    });
+  </script>
+</body>
+</html>

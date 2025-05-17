@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../var/www/html"
+		},
+		{
+			"path": "../etc/nginx/sites-enabled"
+		},
+		{
+			"path": "viewer-counter"
+		}
+	],
+	"settings": {}
+}
